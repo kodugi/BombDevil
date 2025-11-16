@@ -5,11 +5,28 @@ public class PlayManager : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     public GameObject enemy;
+    public GameObject tile;
     public int width;
     public int height;
+    public Color tileColor1;
+    public Color tileColor2;
+    public Color enemyColor;
+    public Transform board;
+    public Transform enemySet;
     void Start()
     {
-        
+        int tileXIndex;
+        int tileYIndex;
+        for (tileXIndex = 0; tileXIndex < width; tileXIndex++)
+        {
+            for (tileYIndex = 0; tileYIndex < height; tileYIndex++)
+            {
+                if (tileXIndex % 2 == tileYIndex % 2)
+                    createTile(tileXIndex, tileYIndex, tileColor1);
+                else
+                    createTile(tileXIndex, tileYIndex, tileColor2);
+            }
+        }
     }
 
     // Update is called once per frame
@@ -22,16 +39,17 @@ public class PlayManager : MonoBehaviour
     {
         DeleteEnemy();
         
-        HashSet<Vector2Int> trajectory = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> coordination = new HashSet<Vector2Int>();
         int currentEnemy = 0;
         while (currentEnemy < enemyNumber)
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
-            if (!trajectory.Contains(new Vector2Int(x, y)))
+            if (!coordination.Contains(new Vector2Int(x, y)))
             {
-                trajectory.Add(new Vector2Int(x, y));
-                Instantiate(enemy, new Vector3(x - (width - 1) / 2f, y - (height - 1) / 2f, 0), Quaternion.identity);
+                coordination.Add(new Vector2Int(x, y));
+                GameObject enemyObj = Instantiate(enemy, calculatePosition(x, y), Quaternion.identity, enemySet);
+                enemyObj.GetComponent<SpriteRenderer>().color = enemyColor;
                 currentEnemy++;
             }
 
@@ -46,5 +64,18 @@ public class PlayManager : MonoBehaviour
             Destroy(e);
         }
 
+    }
+
+    private void createTile(int x, int y, Color color)
+    {
+        GameObject tileObj = Instantiate(tile, calculatePosition(x, y),  Quaternion.identity, board);
+        tileObj.GetComponent<SpriteRenderer>().color = color;
+    }
+    
+    private Vector3 calculatePosition(int x, int y)
+    {
+        float x_coordination = x - (width - 1) / 2f;
+        float y_coordination = y - (height - 1) / 2f;
+        return new Vector3(x_coordination, y_coordination, 0);
     }
 }
