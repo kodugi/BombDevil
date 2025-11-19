@@ -8,40 +8,40 @@ public class BoardManager : MonoBehaviour
     public Transform board;
     public GameManager gameManager;
     
-    private int width;
-    private int height;
+    private int _width;
+    private int _height;
 
     void Awake()
     {
-        width = gameManager.width;
-        height = gameManager.height;
+        _width = gameManager.width;
+        _height = gameManager.height;
     }
     void Start()
     {
         int tileXIndex;
         int tileYIndex;
-        for (tileXIndex = 0; tileXIndex < width; tileXIndex++)
+        for (tileXIndex = 0; tileXIndex < _width; tileXIndex++)
         {
-            for (tileYIndex = 0; tileYIndex < height; tileYIndex++)
+            for (tileYIndex = 0; tileYIndex < _height; tileYIndex++)
             {
                 if (tileXIndex % 2 == tileYIndex % 2)
-                    createTile(tileXIndex, tileYIndex, tileColor1);
+                    CreateTile(tileXIndex, tileYIndex, tileColor1);
                 else
-                    createTile(tileXIndex, tileYIndex, tileColor2);
+                    CreateTile(tileXIndex, tileYIndex, tileColor2);
             }
         }
     }
 
-    private void createTile(int x, int y, Color color)
+    private void CreateTile(int x, int y, Color color)
     {
-        GameObject tileObj = Instantiate(tile, calculatePosition(x, y),  Quaternion.identity, board);
+        GameObject tileObj = Instantiate(tile, CalculatePosition(x, y),  Quaternion.identity, board);
         tileObj.GetComponent<SpriteRenderer>().color = color;
     }
     
-    private Vector3 calculatePosition(int x, int y)
+    private Vector3 CalculatePosition(int x, int y)
     {
-        float x_coordination = x - (width - 1) / 2f;
-        float y_coordination = y - (height - 1) / 2f;
+        float x_coordination = x - (_width - 1) / 2f;
+        float y_coordination = y - (_height - 1) / 2f;
         return new Vector3(x_coordination, y_coordination, 0);
     }
 }
