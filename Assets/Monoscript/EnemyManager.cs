@@ -1,40 +1,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayManager : MonoBehaviour
+public class EnemyManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     public GameObject enemy;
-    public GameObject tile;
-    public int width;
-    public int height;
-    public Color tileColor1;
-    public Color tileColor2;
     public Color enemyColor;
-    public Transform board;
     public Transform enemySet;
-    void Start()
+    public GameManager gameManager;
+    
+    private int width;
+    private int height;
+    
+    void Awake()
     {
-        int tileXIndex;
-        int tileYIndex;
-        for (tileXIndex = 0; tileXIndex < width; tileXIndex++)
-        {
-            for (tileYIndex = 0; tileYIndex < height; tileYIndex++)
-            {
-                if (tileXIndex % 2 == tileYIndex % 2)
-                    createTile(tileXIndex, tileYIndex, tileColor1);
-                else
-                    createTile(tileXIndex, tileYIndex, tileColor2);
-            }
-        }
+        width = gameManager.width;
+        height = gameManager.height;
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    
     public void CreateEnemy(int enemyNumber)
     {
         DeleteEnemy();
@@ -55,7 +37,7 @@ public class PlayManager : MonoBehaviour
 
         }
     }
-
+    
     public void DeleteEnemy()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -63,13 +45,6 @@ public class PlayManager : MonoBehaviour
         {
             Destroy(e);
         }
-
-    }
-
-    private void createTile(int x, int y, Color color)
-    {
-        GameObject tileObj = Instantiate(tile, calculatePosition(x, y),  Quaternion.identity, board);
-        tileObj.GetComponent<SpriteRenderer>().color = color;
     }
     
     private Vector3 calculatePosition(int x, int y)
