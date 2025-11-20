@@ -48,17 +48,29 @@ public class Enemy : MonoBehaviour
     {
         switch (direction)
         {
-            case Direction.North:
+            case Direction.Up:
                 return start + new Vector3(0, distance, 0);
             
-            case Direction.South:
+            case Direction.Down:
                 return start - new Vector3(0, distance, 0);
             
-            case Direction.East:
+            case Direction.Right:
                 return start + new Vector3(distance, 0, 0);
             
-            case Direction.West:
+            case Direction.Left:
                 return start - new Vector3(distance, 0, 0);
+            
+            case Direction.UpRight:
+                return start + new Vector3(distance, distance, 0);
+            
+            case Direction.UpLeft:
+                return start + new Vector3(-distance, distance, 0);
+            
+            case Direction.DownRight:
+                return start + new Vector3(distance, -distance, 0);
+            
+            case Direction.DownLeft:
+                return start - new Vector3(distance, distance, 0);
         }
 
         return new Vector3();

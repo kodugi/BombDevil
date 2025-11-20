@@ -89,25 +89,25 @@ public class GameManager : MonoBehaviour
 
     private void Knockback(int x, int y)
     {
-        if (y < height - 1 && Board[x, y + 1]
-                           && Board[x, y + 1].GetComponent<Enemy>() != null)
+        if (Board[x, (y + 1)%height]
+                           && Board[x, (y + 1)%height].GetComponent<Enemy>() != null)
         {
-            Board[x, y + 1].GetComponent<Enemy>().Knockback(Direction.North, knockbackDistance);
+            Board[x, (y + 1)%height].GetComponent<Enemy>().Knockback(Direction.Up, knockbackDistance);
         }
-        if (y > 0 && Board[x, y - 1]
+        if (Board[x, y - 1]
                   && Board[x, y - 1].GetComponent<Enemy>() != null)
         {
-            Board[x, y - 1].GetComponent<Enemy>().Knockback(Direction.South, knockbackDistance);
+            Board[x, y - 1].GetComponent<Enemy>().Knockback(Direction.Down, knockbackDistance);
         }
-        if (x < width - 1 && Board[x + 1, y]
+        if (Board[x + 1, y]
                           && Board[x + 1, y].GetComponent<Enemy>() != null)
         {
-            Board[x + 1, y].GetComponent<Enemy>().Knockback(Direction.East, knockbackDistance);
+            Board[x + 1, y].GetComponent<Enemy>().Knockback(Direction.Right, knockbackDistance);
         }
-        if (x > 0 && Board[x - 1, y]
+        if (Board[x - 1, y]
                   && Board[x - 1, y].GetComponent<Enemy>() != null)
         {
-            Board[x - 1, y].GetComponent<Enemy>().Knockback(Direction.West, knockbackDistance);
+            Board[x - 1, y].GetComponent<Enemy>().Knockback(Direction.Left, knockbackDistance);
         }
     }
 

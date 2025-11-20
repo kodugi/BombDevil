@@ -3,10 +3,14 @@ using UnityEngine;
 
 public enum Direction
 {
-    North,
-    South,
-    East,
-    West
+    Up,
+    Down,
+    Right,
+    Left,
+    UpRight,
+    UpLeft,
+    DownRight,
+    DownLeft
 }
 
 public class EnemyManager : MonoBehaviour
