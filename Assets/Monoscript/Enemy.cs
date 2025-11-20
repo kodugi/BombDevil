@@ -3,8 +3,6 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-
-    public EnemyManager enemyManager;
     
     private float _walkDuration;
     private float _knockbackDuration;
@@ -12,9 +10,8 @@ public class Enemy : MonoBehaviour
     // initializing internal attribute
     void Awake()
     {
-        enemyManager = EnemyManager.Instance;
-        _walkDuration = enemyManager.walkDuration;
-        _knockbackDuration = enemyManager.knockbackDuration;
+        _walkDuration = GameManager.Instance.walkDuration;
+        _knockbackDuration = GameManager.Instance.knockbackDuration;
     }
     
     // walk API
