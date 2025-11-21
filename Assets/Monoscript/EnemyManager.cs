@@ -20,6 +20,7 @@ public class EnemyManager : MonoBehaviour
     public Transform enemySet;
     public GameManager gameManager;
     
+    // internal variables (get from GameManager)
     private int _width;
     private int _height;
     private Color _enemyColor;
@@ -31,6 +32,7 @@ public class EnemyManager : MonoBehaviour
         _enemyColor = gameManager.enemyColor;
     }
 
+    // create enemy API (call from GameManager)
     public GameObject CreateEnemy(int x, int y)
     {
         GameObject enemyObj = Instantiate(enemy, CalculatePosition(x, y), Quaternion.identity, enemySet);
@@ -38,6 +40,7 @@ public class EnemyManager : MonoBehaviour
         return enemyObj;
     }
     
+    // grid coordinate -> global coordinate
     private Vector3 CalculatePosition(int x, int y)
     {
         float xCoordination = x - (_width - 1) / 2f;

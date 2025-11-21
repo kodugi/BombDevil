@@ -8,6 +8,7 @@ public class BombManager : MonoBehaviour
     public Transform auxiliaryBombSet;
     public TMP_Text leftoverAuxiliaryBombText;
 
+    // internal variables
     private int _width;
     private int _height;
     private int _leftoverAuxiliaryBomb;
@@ -21,12 +22,13 @@ public class BombManager : MonoBehaviour
         _auxiliaryBombColor = gameManager.auxiliaryBombColor;
     }
 
+    // show leftover of the auxiliary bombs
     void Start()
     {
         leftoverAuxiliaryBombText.text = $"leftover: {_leftoverAuxiliaryBomb}";
     }
     
-    // plant an orangeBomb
+    // planting auxiliary bomb API (call from GameManager)
     public GameObject PlantAuxiliaryBomb(int x, int y)
     {
         if (_leftoverAuxiliaryBomb <= 0)
@@ -41,6 +43,7 @@ public class BombManager : MonoBehaviour
         return bomb;
     }
     
+    // grid coordinate -> global coordinate
     private Vector3 CalculatePosition(int x, int y)
     {
         float xCoordination = x - (_width - 1) / 2f;

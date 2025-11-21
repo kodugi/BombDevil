@@ -6,11 +6,10 @@ public class GameManager : MonoBehaviour
     // singleton
     public static GameManager Instance;
     
+    // setting option
     public int width;
     public int height;
     public int enemyNumber;
-    public EnemyManager enemyManager;
-    public BombManager bombManager;
     public int knockbackDistance;
     public float walkDuration;
     public float knockbackDuration;
@@ -20,14 +19,20 @@ public class GameManager : MonoBehaviour
     public Color tileColor1;
     public Color tileColor2;
 
-    public GameObject[,] Board;
-    public List<Vector2Int> AuxiliaryBombs;
+    public EnemyManager enemyManager;
+    public BombManager bombManager;
+    
+    // scoping board situation
+    private GameObject[,] _board;
+    
+    // tracking auxiliary bomb order
+    private List<Vector2Int> _auxiliaryBombs;
 
     void Awake()
     {
         Instance = this;
-        Board = new GameObject[width, height];
-        AuxiliaryBombs = new List<Vector2Int>();
+        _board = new GameObject[width, height];
+        _auxiliaryBombs = new List<Vector2Int>();
     }
 
     void Update()
@@ -36,6 +41,8 @@ public class GameManager : MonoBehaviour
             MouseClickProcess();
     }
 
+    // delete previous enemy
+    // and create enemy on the board in random space
     public void CreateEnemy()
     {
         DeleteEnemy();
@@ -45,14 +52,15 @@ public class GameManager : MonoBehaviour
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
-            if (Board[x, y] == null)
+            if (_board[x, y] == null)
             {
-                Board[x, y] = enemyManager.CreateEnemy(x, y);
+                _board[x, y] = enemyManager.CreateEnemy(x, y);
                 currentEnemy++;
             }
         }
     }
     
+    // delete previous enemy
     public void DeleteEnemy()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -65,21 +73,22 @@ public class GameManager : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                if (Board[x, y] && Board[x, y].GetComponent<Enemy>() != null)
-                    Board[x, y] = null;
+                if (_board[x, y] && _board[x, y].GetComponent<Enemy>() != null)
+                    _board[x, y] = null;
             }
         }
     }
 
+    // explode all auxiliary bomb and push enemy
     public void ExplodeAuxiliaryBomb()
     {
-        while (AuxiliaryBombs.Count > 0)
+        while (_auxiliaryBombs.Count > 0)
         {
-            Vector2Int bombCoordinate = AuxiliaryBombs[0];
-            AuxiliaryBombs.RemoveAt(0);
+            Vector2Int bombCoordinate = _auxiliaryBombs[0];
+            _auxiliaryBombs.RemoveAt(0);
             int x = bombCoordinate.x;
             int y = bombCoordinate.y;
-            GameObject bomb = Board[x, y];
+            GameObject bomb = _board[x, y];
 
             bomb.GetComponent<AuxiliaryBomb>().Explode();
 
@@ -87,30 +96,60 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // find enemy nearby (x,y) and push them (call Enemy.Knockback)
     private void Knockback(int x, int y)
     {
-        if (Board[x, (y + 1)%height]
-                           && Board[x, (y + 1)%height].GetComponent<Enemy>() != null)
+        //Up
+        if (_board[x, (y + 1)%height]
+                           && _board[x, (y + 1)%height].GetComponent<Enemy>() != null)
         {
-            Board[x, (y + 1)%height].GetComponent<Enemy>().Knockback(Direction.Up, knockbackDistance);
+            _board[x, (y + 1)%height].GetComponent<Enemy>().Knockback(Direction.Up, knockbackDistance);
         }
-        if (Board[x, y - 1]
-                  && Board[x, y - 1].GetComponent<Enemy>() != null)
+        //Down
+        if (_board[x, ((y - 1)%height + height)%height]
+                  && _board[x, ((y - 1)%height + height)%height].GetComponent<Enemy>() != null)
         {
-            Board[x, y - 1].GetComponent<Enemy>().Knockback(Direction.Down, knockbackDistance);
+            _board[x, ((y - 1)%height + height)%height].GetComponent<Enemy>().Knockback(Direction.Down, knockbackDistance);
         }
-        if (Board[x + 1, y]
-                          && Board[x + 1, y].GetComponent<Enemy>() != null)
+        //Right
+        if (_board[(x + 1)%width, y]
+                          && _board[(x + 1)%width, y].GetComponent<Enemy>() != null)
         {
-            Board[x + 1, y].GetComponent<Enemy>().Knockback(Direction.Right, knockbackDistance);
+            _board[(x + 1)%width, y].GetComponent<Enemy>().Knockback(Direction.Right, knockbackDistance);
         }
-        if (Board[x - 1, y]
-                  && Board[x - 1, y].GetComponent<Enemy>() != null)
+        //Left
+        if (_board[((x - 1)%width + width)%width, y]
+                  && _board[((x - 1)%width + width)%width, y].GetComponent<Enemy>() != null)
         {
-            Board[x - 1, y].GetComponent<Enemy>().Knockback(Direction.Left, knockbackDistance);
+            _board[((x - 1)%width + width)%width, y].GetComponent<Enemy>().Knockback(Direction.Left, knockbackDistance);
+        }
+        //UpRight
+        if (_board[(x + 1)%width, (y + 1)%height]
+            && _board[(x + 1)%width, (y + 1)%height].GetComponent<Enemy>() != null)
+        {
+            _board[(x + 1)%width, (y + 1)%height].GetComponent<Enemy>().Knockback(Direction.UpRight, knockbackDistance);
+        }
+        //DownLeft
+        if (_board[((x - 1)%width + width)%width, ((y - 1)%height + height)%height]
+            && _board[((x - 1)%width + width)%width, ((y - 1)%height + height)%height].GetComponent<Enemy>() != null)
+        {
+            _board[((x - 1)%width + width)%width, ((y - 1)%height + height)%height].GetComponent<Enemy>().Knockback(Direction.DownLeft, knockbackDistance);
+        }
+        //DownRight
+        if (_board[(x + 1)%width, ((y - 1)%height + height)%height]
+            && _board[(x + 1)%width, ((y - 1)%height + height)%height].GetComponent<Enemy>() != null)
+        {
+            _board[(x + 1)%width, ((y - 1)%height + height)%height].GetComponent<Enemy>().Knockback(Direction.DownRight, knockbackDistance);
+        }
+        //UpLeft
+        if (_board[((x - 1)%width + width)%width, (y + 1)%height]
+            && _board[((x - 1)%width + width)%width, (y + 1)%height].GetComponent<Enemy>() != null)
+        {
+            _board[((x - 1)%width + width)%width, (y + 1)%height].GetComponent<Enemy>().Knockback(Direction.UpLeft, knockbackDistance);
         }
     }
 
+    // when mouse click occurs on the board, plant auxiliary bomb in the cell
     private void MouseClickProcess()
     {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -119,18 +158,20 @@ public class GameManager : MonoBehaviour
         int y = GlobalToGridY(worldPos.y);
 
         if (x >= 0 && x < width && y >= 0 && y < height
-            && Board[x, y] == null)
+            && _board[x, y] == null)
         {
             CreateAuxiliaryBomb(x, y);
         }
     }
+    
+    // if (x,y) is empty, fill the cell by an auxiliary bomb
     private void CreateAuxiliaryBomb(int x, int y)
     {
-        if (Board[x, y] != null)
+        if (_board[x, y] != null)
             return;
 
-        Board[x, y] = bombManager.PlantAuxiliaryBomb(x, y);
-        AuxiliaryBombs.Add(new Vector2Int(x, y));
+        _board[x, y] = bombManager.PlantAuxiliaryBomb(x, y);
+        _auxiliaryBombs.Add(new Vector2Int(x, y));
     }
     
     // global coordinate -> board coordinate

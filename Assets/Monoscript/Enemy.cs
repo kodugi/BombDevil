@@ -4,6 +4,7 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     
+    // motion duration (get from GameManager)
     private float _walkDuration;
     private float _knockbackDuration;
 
@@ -44,6 +45,7 @@ public class Enemy : MonoBehaviour
         transform.position = target;
     }
 
+    // get destination from direction, distance, start point
     private static Vector3 GetTarget(Direction direction, int distance, Vector3 start)
     {
         switch (direction)
