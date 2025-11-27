@@ -4,7 +4,6 @@ public class BoardManager : MonoBehaviour
 {
     public GameObject tile;
     public Transform board;
-    public GameManager gameManager;
     
     // internal setting value (get from GameManager)
     private int _width;
@@ -12,12 +11,14 @@ public class BoardManager : MonoBehaviour
     private Color _tileColor1;
     private Color _tileColor2;
 
-    void Awake()
+    public void Initialize(GameObject tile, Transform board, GameManager gameManager)
     {
-        _width = gameManager.width;
-        _height = gameManager.height;
-        _tileColor1 = gameManager.tileColor1;
-        _tileColor2 = gameManager.tileColor2;
+        this.tile = tile;
+        this.board = board;
+        _width = gameManager.GetWidth();
+        _height = gameManager.GetHeight();
+        _tileColor1 = gameManager.GetTileColor1();
+        _tileColor2 = gameManager.GetTileColor2();
     }
     
     // lay tiles

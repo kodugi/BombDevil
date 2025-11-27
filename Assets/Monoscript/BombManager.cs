@@ -4,7 +4,6 @@ using UnityEngine;
 public class BombManager : MonoBehaviour
 {
     public GameObject auxiliaryBomb;
-    public GameManager gameManager;
     public Transform auxiliaryBombSet;
     public TMP_Text leftoverAuxiliaryBombText;
 
@@ -14,17 +13,15 @@ public class BombManager : MonoBehaviour
     private int _leftoverAuxiliaryBomb;
     private Color _auxiliaryBombColor;
 
-    void Awake()
+    public void Initialize(GameObject auxiliaryBomb, GameManager gameManager, Transform auxiliaryBombSet, TMP_Text leftoverAuxiliaryBombText)
     {
-        _width = gameManager.width;
-        _height = gameManager.height;
-        _leftoverAuxiliaryBomb = gameManager.initialAuxiliaryBomb;
-        _auxiliaryBombColor = gameManager.auxiliaryBombColor;
-    }
-
-    // show leftover of the auxiliary bombs
-    void Start()
-    {
+        this.auxiliaryBomb = auxiliaryBomb;
+        this.auxiliaryBombSet = auxiliaryBombSet;
+        this.leftoverAuxiliaryBombText = leftoverAuxiliaryBombText;
+        _width = gameManager.GetWidth();
+        _height = gameManager.GetHeight();
+        _leftoverAuxiliaryBomb = gameManager.GetInitialAuxiliaryBomb();
+        _auxiliaryBombColor = gameManager.GetAuxiliaryBombColor();
         leftoverAuxiliaryBombText.text = $"leftover: {_leftoverAuxiliaryBomb}";
     }
     

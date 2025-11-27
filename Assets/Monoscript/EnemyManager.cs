@@ -18,18 +18,19 @@ public class EnemyManager : MonoBehaviour
 
     public GameObject enemy;
     public Transform enemySet;
-    public GameManager gameManager;
     
     // internal variables (get from GameManager)
     private int _width;
     private int _height;
     private Color _enemyColor;
     
-    void Awake()
+    public void Initialize(GameObject enemy, Transform enemySet, GameManager gameManager)
     {
-        _width = gameManager.width;
-        _height = gameManager.height;
-        _enemyColor = gameManager.enemyColor;
+        this.enemy = enemy;
+        this.enemySet = enemySet;
+        _width = gameManager.GetWidth();
+        _height = gameManager.GetHeight();
+        _enemyColor = gameManager.GetEnemyColor();
     }
 
     // create enemy API (call from GameManager)

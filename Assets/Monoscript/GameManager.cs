@@ -1,28 +1,29 @@
 using System.Collections.Generic;
-using System.Numerics;
+using System.IO;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
+using Entity;
 
 public class GameManager : MonoBehaviour
 {
-    // singleton
-    public static GameManager Instance;
     
-    // setting option
-    public int width;
-    public int height;
-    public int enemyNumber;
-    public int knockbackDistance;
-    public float walkDuration;
-    public float knockbackDuration;
-    public Color enemyColor;
-    public int initialAuxiliaryBomb;
-    public Color auxiliaryBombColor;
-    public Color tileColor1;
-    public Color tileColor2;
-
     public EnemyManager enemyManager;
     public BombManager bombManager;
+    
+    // setting option from StageManager (common set)
+    private int _knockbackDistance;
+    private float _walkDuration;
+    private float _knockbackDuration;
+    private Color _enemyColor;
+    private Color _auxiliaryBombColor;
+    private Color _tileColor1; 
+    private Color _tileColor2;
+    
+    // setting option from JSON file
+    private int _width;
+    private int _height;
+    private int _enemyNumber;
+    private int _initialAuxiliaryBomb;
     
     // scoping board situation
     private GameObject[,] _board;
@@ -31,17 +32,20 @@ public class GameManager : MonoBehaviour
     private List<Vector2Int> _auxiliaryBombs;
     
     // boundary coordinate
-    private static float _minX, _minY, _maxX, _maxY;
+    private float _minX, _minY, _maxX, _maxY;
 
-    void Awake()
+    public void Initialize(EnemyManager enemyManager, BombManager bombManager, int stageId, StageCommonData commonData)
     {
-        Instance = this;
-        _board = new GameObject[width, height];
+        this.enemyManager = enemyManager;
+        this.bombManager = bombManager;
+        _board = new GameObject[_width, _height];
         _auxiliaryBombs = new List<Vector2Int>();
-        _minX = -width / 2.0f;
-        _maxX = width / 2.0f;
-        _minY = -height / 2.0f;
-        _maxY = height / 2.0f;
+        _minX = -_width / 2.0f;
+        _maxX = _width / 2.0f;
+        _minY = -_height / 2.0f;
+        _maxY = _height / 2.0f;
+        
+        SetStageState(stageId);
     }
 
     void Update()
@@ -57,10 +61,10 @@ public class GameManager : MonoBehaviour
         DeleteEnemy();
         
         int currentEnemy = 0;
-        while (currentEnemy < enemyNumber)
+        while (currentEnemy < _enemyNumber)
         {
-            int x = Random.Range(0, width);
-            int y = Random.Range(0, height);
+            int x = Random.Range(0, _width);
+            int y = Random.Range(0, _height);
             if (_board[x, y] == null)
             {
                 _board[x, y] = enemyManager.CreateEnemy(x, y);
@@ -78,9 +82,9 @@ public class GameManager : MonoBehaviour
             Destroy(e);
         }
 
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < _width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < _height; y++)
             {
                 if (_board[x, y] && _board[x, y].GetComponent<Enemy>() != null)
                     _board[x, y] = null;
@@ -106,84 +110,140 @@ public class GameManager : MonoBehaviour
     }
     
     // get boundary coordinate API
-    public static float GetMaxX()
+    public float GetMaxX()
     {
         return _maxX;
     }
     
-    public static float GetMinX()
+    public float GetMinX()
     {
         return _minX;
     }
     
-    public static float GetMaxY()
+    public float GetMaxY()
     {
         return _maxY;
     }
     
-    public static float GetMinY()
+    public float GetMinY()
     {
         return _minY;
+    }
+    
+    // get private variable API
+    public int getKnockbackDistance()
+    {
+        return _knockbackDistance;
+    }
+
+    public float getWalkDuration()
+    {
+        return _walkDuration;
+    }
+
+    public float getKnockbackDuration()
+    {
+        return _knockbackDuration;
+    }
+
+    public Color GetEnemyColor()
+    {
+        return _enemyColor;
+    }
+
+    public Color GetAuxiliaryBombColor()
+    {
+        return _auxiliaryBombColor;
+    }
+
+    public Color GetTileColor1()
+    {
+        return _tileColor1;
+    }
+
+    public Color GetTileColor2()
+    {
+        return _tileColor2;
+    }
+
+    public int GetWidth()
+    {
+        return _width;
+    }
+
+    public int GetHeight()
+    {
+        return _height;
+    }
+
+    public int GetEnemyNumber()
+    {
+        return _enemyNumber;
+    }
+
+    public int GetInitialAuxiliaryBomb()
+    {
+        return _initialAuxiliaryBomb;
     }
 
     // find enemy nearby (x,y) and push them (call Enemy.Knockback)
     private void Knockback(int x, int y)
     {
         //Up
-        if (_board[x, Mod(y + 1, height)]
-                           && _board[x, Mod(y + 1, height)].GetComponent<Enemy>() != null)
+        if (_board[x, Mod(y + 1, _height)]
+                           && _board[x, Mod(y + 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[x, Mod(y + 1, height)].GetComponent<Enemy>().Knockback(Direction.Up, knockbackDistance);
-            ReflectMoveInBoard(x, Mod(y + 1, height), Direction.Up, knockbackDistance);
+            _board[x, Mod(y + 1, _height)].GetComponent<Enemy>().Knockback(Direction.Up, _knockbackDistance);
+            ReflectMoveInBoard(x, Mod(y + 1, _height), Direction.Up, _knockbackDistance);
         }
         //Down
-        if (_board[x, Mod(y - 1, height)]
-                  && _board[x, Mod(y - 1, height)].GetComponent<Enemy>() != null)
+        if (_board[x, Mod(y - 1, _height)]
+                  && _board[x, Mod(y - 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[x, Mod(y - 1, height)].GetComponent<Enemy>().Knockback(Direction.Down, knockbackDistance);
-            ReflectMoveInBoard(x, Mod(y - 1, height), Direction.Down, knockbackDistance);
+            _board[x, Mod(y - 1, _height)].GetComponent<Enemy>().Knockback(Direction.Down, _knockbackDistance);
+            ReflectMoveInBoard(x, Mod(y - 1, _height), Direction.Down, _knockbackDistance);
         }
         //Right
-        if (_board[Mod(x + 1, width), y]
-                          && _board[Mod(x + 1, width), y].GetComponent<Enemy>() != null)
+        if (_board[Mod(x + 1, _width), y]
+                          && _board[Mod(x + 1, _width), y].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x + 1, width), y].GetComponent<Enemy>().Knockback(Direction.Right, knockbackDistance);
-            ReflectMoveInBoard(Mod(x + 1, width), y, Direction.Right, knockbackDistance);
+            _board[Mod(x + 1, _width), y].GetComponent<Enemy>().Knockback(Direction.Right, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x + 1, _width), y, Direction.Right, _knockbackDistance);
         }
         //Left
-        if (_board[Mod(x - 1, width), y]
-                  && _board[Mod(x - 1, width), y].GetComponent<Enemy>() != null)
+        if (_board[Mod(x - 1, _width), y]
+                  && _board[Mod(x - 1, _width), y].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x - 1, width), y].GetComponent<Enemy>().Knockback(Direction.Left, knockbackDistance);
-            ReflectMoveInBoard(Mod(x - 1, width), y, Direction.Left, knockbackDistance);
+            _board[Mod(x - 1, _width), y].GetComponent<Enemy>().Knockback(Direction.Left, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x - 1, _width), y, Direction.Left, _knockbackDistance);
         }
         //UpRight
-        if (_board[Mod(x + 1, width), Mod(y + 1, height)]
-            && _board[Mod(x + 1, width), Mod(y + 1, height)].GetComponent<Enemy>() != null)
+        if (_board[Mod(x + 1, _width), Mod(y + 1, _height)]
+            && _board[Mod(x + 1, _width), Mod(y + 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x + 1, width), Mod(y + 1, height)].GetComponent<Enemy>().Knockback(Direction.UpRight, knockbackDistance);
-            ReflectMoveInBoard(Mod(x + 1, width), Mod(y + 1, height), Direction.UpRight, knockbackDistance);
+            _board[Mod(x + 1, _width), Mod(y + 1, _height)].GetComponent<Enemy>().Knockback(Direction.UpRight, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x + 1, _width), Mod(y + 1, _height), Direction.UpRight, _knockbackDistance);
         }
         //DownLeft
-        if (_board[Mod(x - 1, width), Mod(y - 1, height)]
-            && _board[Mod(x - 1, width), Mod(y - 1, height)].GetComponent<Enemy>() != null)
+        if (_board[Mod(x - 1, _width), Mod(y - 1, _height)]
+            && _board[Mod(x - 1, _width), Mod(y - 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x - 1, width), Mod(y - 1, height)].GetComponent<Enemy>().Knockback(Direction.DownLeft, knockbackDistance);
-            ReflectMoveInBoard(Mod(x - 1, width), Mod(y - 1, height), Direction.DownLeft, knockbackDistance);
+            _board[Mod(x - 1, _width), Mod(y - 1, _height)].GetComponent<Enemy>().Knockback(Direction.DownLeft, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x - 1, _width), Mod(y - 1, _height), Direction.DownLeft, _knockbackDistance);
         }
         //DownRight
-        if (_board[Mod(x + 1, width), Mod(y - 1, height)]
-            && _board[Mod(x + 1, width), Mod(y - 1, height)].GetComponent<Enemy>() != null)
+        if (_board[Mod(x + 1, _width), Mod(y - 1, _height)]
+            && _board[Mod(x + 1, _width), Mod(y - 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x + 1, width), Mod(y - 1, height)].GetComponent<Enemy>().Knockback(Direction.DownRight, knockbackDistance);
-            ReflectMoveInBoard(Mod(x + 1, width), Mod(y - 1, height), Direction.DownRight, knockbackDistance);
+            _board[Mod(x + 1, _width), Mod(y - 1, _height)].GetComponent<Enemy>().Knockback(Direction.DownRight, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x + 1, _width), Mod(y - 1, _height), Direction.DownRight, _knockbackDistance);
         }
         //UpLeft
-        if (_board[Mod(x - 1, width), Mod(y + 1, height)]
-            && _board[Mod(x - 1, width), Mod(y + 1, height)].GetComponent<Enemy>() != null)
+        if (_board[Mod(x - 1, _width), Mod(y + 1, _height)]
+            && _board[Mod(x - 1, _width), Mod(y + 1, _height)].GetComponent<Enemy>() != null)
         {
-            _board[Mod(x - 1, width), Mod(y + 1, height)].GetComponent<Enemy>().Knockback(Direction.UpLeft, knockbackDistance);
-            ReflectMoveInBoard(Mod(x - 1, width), Mod(y + 1, height), Direction.UpLeft, knockbackDistance);
+            _board[Mod(x - 1, _width), Mod(y + 1, _height)].GetComponent<Enemy>().Knockback(Direction.UpLeft, _knockbackDistance);
+            ReflectMoveInBoard(Mod(x - 1, _width), Mod(y + 1, _height), Direction.UpLeft, _knockbackDistance);
         }
     }
     
@@ -194,7 +254,7 @@ public class GameManager : MonoBehaviour
         if (obj == null)
             return;
 
-        Vector3 target = GetWrappedTarget(direction, distance, new Vector3(x, y, 0), 0, width, 0, height);
+        Vector3 target = GetWrappedTarget(direction, distance, new Vector3(x, y, 0), 0, _width, 0, _height);
         if (_board[(int)target.x, (int)target.y] != null)
         {
             // collision
@@ -265,7 +325,7 @@ public class GameManager : MonoBehaviour
         int x = GlobalToGridX(worldPos.x);
         int y = GlobalToGridY(worldPos.y);
 
-        if (x >= 0 && x < width && y >= 0 && y < height
+        if (x >= 0 && x < _width && y >= 0 && y < _height
             && _board[x, y] == null)
         {
             CreateAuxiliaryBomb(x, y);
@@ -285,12 +345,12 @@ public class GameManager : MonoBehaviour
     // global coordinate -> board coordinate
     private int GlobalToGridX(float x)
     {
-        return Mathf.FloorToInt(x + width / 2f);
+        return Mathf.FloorToInt(x + _width / 2f);
     }
     
     private int GlobalToGridY(float y)
     {   
-        return Mathf.FloorToInt(y + height / 2f);
+        return Mathf.FloorToInt(y + _height / 2f);
     }
 
     private static float Mod(float x, int m)
@@ -306,5 +366,17 @@ public class GameManager : MonoBehaviour
     private static int Mod(int x, int m)
     {
         return (x % m + m) % m;
+    }
+    
+    // init setting from stage json file
+    private void SetStageState(int stageId)
+    {
+        string path = Path.Combine(Application.streamingAssetsPath, "Json", "Stage", "stage" + stageId + ".json");
+        string json = File.ReadAllText(path);
+        StageDifferentData differentData = JsonUtility.FromJson<StageDifferentData>(json);
+        _width = differentData.width;
+        _height = differentData.height;
+        _enemyNumber = differentData.enemyNumber;
+        _initialAuxiliaryBomb = differentData.initialAuxiliaryBomb;
     }
 }

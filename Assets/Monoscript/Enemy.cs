@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    
+
     // motion duration (get from GameManager)
     private float _walkDuration;
     private float _knockbackDuration;
@@ -12,14 +12,14 @@ public class Enemy : MonoBehaviour
     private float _minX, _maxX, _minY, _maxY;
 
     // initializing internal attribute
-    void Awake()
+    public void Initialize(GameManager gameManager)
     {
-        _walkDuration = GameManager.Instance.walkDuration;
-        _knockbackDuration = GameManager.Instance.knockbackDuration;
-        _minX = GameManager.GetMinX();
-        _maxX = GameManager.GetMaxX();
-        _minY = GameManager.GetMinY();
-        _maxY = GameManager.GetMaxY();
+        _walkDuration = gameManager.getWalkDuration();
+        _knockbackDuration = gameManager.getKnockbackDuration();
+        _minX = gameManager.GetMinX();
+        _maxX = gameManager.GetMaxX();
+        _minY = gameManager.GetMinY();
+        _maxY = gameManager.GetMaxY();
     }
     
     // walk API
