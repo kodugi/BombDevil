@@ -3,6 +3,8 @@
     "width": 10,
     "height": 10,
     "enemyNumber": 6,
-    "initialAuxiliaryBomb": 6,
+    "initialBlueBomb": 3,
+    "initialGreenBomb": 2,
+    "initialPinkBomb": 1,
     "boardSpritePath": "Sprites/Boards/board_10x10"
 }

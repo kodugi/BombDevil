@@ -7,7 +7,34 @@
         public int width;
         public int height;
         public int enemyNumber;
-        public int initialAuxiliaryBomb;
+        
+        // Initial bomb counts per type
+        public int initialBlueBomb;
+        public int initialGreenBomb;
+        public int initialPinkBomb;
+        
         public string boardSpritePath;  // Resources path to board sprite (e.g., "Sprites/Boards/board_7x7")
+        
+        // Get initial bomb count by type
+        public int GetInitialBombCount(BombType bombType)
+        {
+            switch (bombType)
+            {
+                case BombType.BlueBomb:
+                    return initialBlueBomb;
+                case BombType.GreenBomb:
+                    return initialGreenBomb;
+                case BombType.PinkBomb:
+                    return initialPinkBomb;
+                default:
+                    return 0;
+            }
+        }
+        
+        // Get total initial bomb count
+        public int GetTotalInitialBombs()
+        {
+            return initialBlueBomb + initialGreenBomb + initialPinkBomb;
+        }
     }
 }

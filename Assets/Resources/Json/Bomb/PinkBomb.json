@@ -1,0 +1,6 @@
+{
+    "bombType": "PinkBomb",
+    "range": 2,
+    "knockbackDistance": 1,
+    "colorHex": "#D94A8C"
+}

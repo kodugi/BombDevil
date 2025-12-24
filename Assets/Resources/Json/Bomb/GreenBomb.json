@@ -1,0 +1,6 @@
+{
+    "bombType": "GreenBomb",
+    "range": 1,
+    "knockbackDistance": 3,
+    "colorHex": "#4AD97A"
+}

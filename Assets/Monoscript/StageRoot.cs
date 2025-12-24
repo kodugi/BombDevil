@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Entity;
 
@@ -18,7 +19,18 @@ public class StageRoot : MonoBehaviour
     // Scene objects (found by name)
     private Transform enemySet;
     private Transform auxiliaryBombSet;
-    private TMP_Text leftoverAuxiliaryBombText;
+    private TMP_Text blueBombText;
+    private TMP_Text greenBombText;
+    private TMP_Text pinkBombText;
+    
+    // Check UI objects (found by name)
+    private GameObject blueBombChecked;
+    private GameObject greenBombChecked;
+    private GameObject pinkBombChecked;
+    
+    // Explode button and text
+    private Button explodeButton;
+    private TMP_Text explodeButtonText;
     
     // Public accessor for GameManager (used by StageManager)
     public GameManager GameManager => gameManager;
@@ -41,7 +53,27 @@ public class StageRoot : MonoBehaviour
         // Find scene objects by name
         enemySet = GameObject.Find("EnemySet")?.transform;
         auxiliaryBombSet = GameObject.Find("AuxiliaryBombSet")?.transform;
-        leftoverAuxiliaryBombText = GameObject.Find("LeftoverAuxiliaryBomb")?.GetComponent<TMP_Text>();
+        blueBombText = GameObject.Find("LeftoverBlueBomb")?.GetComponent<TMP_Text>();
+        greenBombText = GameObject.Find("LeftoverGreenBomb")?.GetComponent<TMP_Text>();
+        pinkBombText = GameObject.Find("LeftoverPinkBomb")?.GetComponent<TMP_Text>();
+        
+        // Find check UI objects by name (must be active in scene to be found)
+        blueBombChecked = GameObject.Find("BlueBombChecked");
+        greenBombChecked = GameObject.Find("GreenBombChecked");
+        pinkBombChecked = GameObject.Find("PinkBombChecked");
+        
+        // Deactivate all check UIs at game start
+        if (blueBombChecked != null) blueBombChecked.SetActive(false);
+        if (greenBombChecked != null) greenBombChecked.SetActive(false);
+        if (pinkBombChecked != null) pinkBombChecked.SetActive(false);
+        
+        // Find explode button and text
+        GameObject explodeButtonObj = GameObject.Find("ExplodeButton");
+        if (explodeButtonObj != null)
+        {
+            explodeButton = explodeButtonObj.GetComponent<Button>();
+        }
+        explodeButtonText = GameObject.Find("ExplodeButtonText")?.GetComponent<TMP_Text>();
         
         // Initialize GameManager first (loads stage data including board sprite path)
         gameManager.Initialize(enemyManager, bombManager, stageId, commonData);
@@ -57,7 +89,17 @@ public class StageRoot : MonoBehaviour
         
         // Initialize other managers with BoardManager reference and sprites
         enemyManager.Initialize(enemyPrefab, enemySet, gameManager, boardManager, enemySprite);
-        bombManager.Initialize(auxiliaryBombPrefab, gameManager, auxiliaryBombSet, leftoverAuxiliaryBombText, boardManager);
+        bombManager.Initialize(auxiliaryBombPrefab, gameManager, auxiliaryBombSet, 
+            blueBombText, greenBombText, pinkBombText,
+            blueBombChecked, greenBombChecked, pinkBombChecked,
+            explodeButtonText, boardManager);
+        
+        // Connect explode button click event
+        if (explodeButton != null)
+        {
+            explodeButton.onClick.RemoveAllListeners();
+            explodeButton.onClick.AddListener(gameManager.OnExplodeButtonClick);
+        }
         
         // Create enemies for this stage
         gameManager.CreateEnemy();

@@ -11,6 +11,9 @@ public class Enemy : MonoBehaviour
     // cell size for scaling movement
     private float _cellSize;
     
+    // direction attribute for this enemy (Up, Down, Left, Right only)
+    private Direction _moveDirection;
+    
     // boundary coordinate (get from BoardManager)
     private float _minX, _maxX, _minY, _maxY;
 
@@ -42,6 +45,54 @@ public class Enemy : MonoBehaviour
         StartCoroutine(Move(direction, 1, _walkDuration));
     }
     
+    // set random direction (Up, Down, Left, Right) and apply rotation
+    public void SetRandomDirection()
+    {
+        Direction[] cardinalDirections = { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+        int randomIndex = Random.Range(0, cardinalDirections.Length);
+        _moveDirection = cardinalDirections[randomIndex];
+        
+        // Apply rotation based on direction
+        ApplyDirectionRotation();
+    }
+    
+    // Apply rotation based on move direction
+    // Default sprite faces Down (0 degrees)
+    private void ApplyDirectionRotation()
+    {
+        float rotationZ = 0f;
+        
+        switch (_moveDirection)
+        {
+            case Direction.Down:
+                rotationZ = 0f;      // Default - facing down
+                break;
+            case Direction.Up:
+                rotationZ = 180f;    // Facing up
+                break;
+            case Direction.Left:
+                rotationZ = -90f;    // Facing left (or 270)
+                break;
+            case Direction.Right:
+                rotationZ = 90f;     // Facing right
+                break;
+        }
+        
+        transform.rotation = Quaternion.Euler(0f, 0f, rotationZ);
+    }
+    
+    // get current direction
+    public Direction GetMoveDirection()
+    {
+        return _moveDirection;
+    }
+    
+    // move one cell in the assigned direction
+    public void MoveInDirection()
+    {
+        Walk(_moveDirection);
+    }
+    
     // knockback API
     public void Knockback(Direction direction, int distance)
     {
@@ -66,30 +117,40 @@ public class Enemy : MonoBehaviour
         transform.position = GetWrappedTarget(direction, distance, start, _minX, _maxX, _minY, _maxY);
     }
 
-    // It can process boundary condition
+    // It can process boundary condition - wraps position within bounds
     private static Vector3 LerpWrap(Vector3 a, Vector3 b, float t,
         float minX = float.NegativeInfinity, float maxX = float.PositiveInfinity,
         float minY = float.NegativeInfinity, float maxY = float.PositiveInfinity,
         float minZ = float.NegativeInfinity, float maxZ = float.PositiveInfinity)
     {
+        // Simple linear interpolation
         float x = a.x + (b.x - a.x) * t;
         float y = a.y + (b.y - a.y) * t;
         float z = a.z + (b.z - a.z) * t;
         
-        if (x > maxX)
-            x = minX + (b.x - a.x) * t + maxX - a.x;
-        else if (x < minX)
-            x = maxX + (b.x - a.x) * t - minX + a.x;
+        // Wrap x within bounds
+        float widthX = maxX - minX;
+        if (widthX > 0)
+        {
+            while (x > maxX) x -= widthX;
+            while (x < minX) x += widthX;
+        }
         
-        if (y > maxY)
-            y = minY + (b.y - a.y) * t + maxY - a.y;
-        else if (y < minY)
-            y = maxY + (b.y - a.y) * t - minY + a.y;
+        // Wrap y within bounds
+        float widthY = maxY - minY;
+        if (widthY > 0)
+        {
+            while (y > maxY) y -= widthY;
+            while (y < minY) y += widthY;
+        }
         
-        if (z > maxZ)
-            z = minZ + (b.z - a.z) * t + maxX - a.z;
-        else if (x < minX)
-            z = maxX + (b.z - a.z) * t - minX + a.z;
+        // Wrap z within bounds
+        float widthZ = maxZ - minZ;
+        if (widthZ > 0)
+        {
+            while (z > maxZ) z -= widthZ;
+            while (z < minZ) z += widthZ;
+        }
 
         return new Vector3(x, y, z);
     }
