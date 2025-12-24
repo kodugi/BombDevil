@@ -9,20 +9,15 @@ namespace Entity
         public int knockbackDistance;
         public Color enemyColor;
         public Color auxiliaryBombColor;
-        public Color tileColor1;
-        public Color tileColor2;
 
         public StageCommonData(float walkDuration, float knockbackDuration,
-            int knockbackDistance, Color enemyColor, Color auxiliaryBombColor,
-            Color tileColor1, Color tileColor2)
+            int knockbackDistance, Color enemyColor, Color auxiliaryBombColor)
         {
             this.walkDuration = walkDuration;
             this.knockbackDuration = knockbackDuration;
             this.knockbackDistance = knockbackDistance;
             this.enemyColor = enemyColor;
             this.auxiliaryBombColor = auxiliaryBombColor;
-            this.tileColor1 = tileColor1;
-            this.tileColor2 = tileColor2;
         }
     }
 }

@@ -1,14 +1,15 @@
+using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 using Entity;
 
 public class GameManager : MonoBehaviour
 {
-    
-    public EnemyManager enemyManager;
-    public BombManager bombManager;
+    // Manager references (set via Initialize)
+    private EnemyManager enemyManager;
+    private BombManager bombManager;
+    private BoardManager boardManager;
     
     // setting option from StageManager (common set)
     private int _knockbackDistance;
@@ -16,14 +17,13 @@ public class GameManager : MonoBehaviour
     private float _knockbackDuration;
     private Color _enemyColor;
     private Color _auxiliaryBombColor;
-    private Color _tileColor1; 
-    private Color _tileColor2;
     
     // setting option from JSON file
     private int _width;
     private int _height;
     private int _enemyNumber;
     private int _initialAuxiliaryBomb;
+    private string _boardSpritePath;  // Resources path to board sprite
     
     // scoping board situation
     private GameObject[,] _board;
@@ -33,25 +33,101 @@ public class GameManager : MonoBehaviour
     
     // boundary coordinate
     private float _minX, _minY, _maxX, _maxY;
+    
+    // game state management
+    private GameState _currentState = GameState.Playing;
+    public event Action<GameState> OnGameStateChanged;
 
     public void Initialize(EnemyManager enemyManager, BombManager bombManager, int stageId, StageCommonData commonData)
     {
+        // Load stage data first
+        SetStageState(stageId);
+        SetCommonData(commonData);
+        
         this.enemyManager = enemyManager;
         this.bombManager = bombManager;
         _board = new GameObject[_width, _height];
         _auxiliaryBombs = new List<Vector2Int>();
-        _minX = -_width / 2.0f;
-        _maxX = _width / 2.0f;
-        _minY = -_height / 2.0f;
-        _maxY = _height / 2.0f;
-        
-        SetStageState(stageId);
+        _currentState = GameState.Playing;
+    }
+    
+    // Set BoardManager reference after it's initialized
+    public void SetBoardManager(BoardManager boardManager)
+    {
+        this.boardManager = boardManager;
+    }
+    
+    // Set common data from StageManager
+    private void SetCommonData(StageCommonData commonData)
+    {
+        _walkDuration = commonData.walkDuration;
+        _knockbackDuration = commonData.knockbackDuration;
+        _knockbackDistance = commonData.knockbackDistance;
+        _enemyColor = commonData.enemyColor;
+        _auxiliaryBombColor = commonData.auxiliaryBombColor;
     }
 
     void Update()
     {
+        // Skip if not initialized or not playing
+        if (_board == null || _currentState != GameState.Playing)
+            return;
+            
         if (Input.GetMouseButtonDown(0))
             MouseClickProcess();
+            
+        CheckGameState();
+    }
+    
+    // check win/lose conditions
+    private void CheckGameState()
+    {
+        // Check win condition: all enemies eliminated
+        if (GetEnemyCount() == 0)
+        {
+            SetGameState(GameState.Win);
+            return;
+        }
+        
+        // Check lose condition: no bombs left and no bombs placed
+        if (bombManager.GetLeftoverAuxiliaryBomb() <= 0 && 
+            bombManager.GetPlantedAuxiliaryBombCount() <= 0)
+        {
+            SetGameState(GameState.Lose);
+            return;
+        }
+    }
+    
+    // set game state and trigger event
+    private void SetGameState(GameState newState)
+    {
+        if (_currentState == newState)
+            return;
+            
+        _currentState = newState;
+        OnGameStateChanged?.Invoke(_currentState);
+        Debug.Log($"Game State Changed: {_currentState}");
+    }
+    
+    // get current game state
+    public GameState GetCurrentState()
+    {
+        return _currentState;
+    }
+    
+    // count enemies on the board
+    private int GetEnemyCount()
+    {
+        int count = 0;
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                if (_board[x, y] != null && _board[x, y].GetComponent<Enemy>() != null)
+                    count++;
+            }
+        }
+        return count;
     }
 
     // delete previous enemy
@@ -63,8 +139,8 @@ public class GameManager : MonoBehaviour
         int currentEnemy = 0;
         while (currentEnemy < _enemyNumber)
         {
-            int x = Random.Range(0, _width);
-            int y = Random.Range(0, _height);
+            int x = UnityEngine.Random.Range(0, _width);
+            int y = UnityEngine.Random.Range(0, _height);
             if (_board[x, y] == null)
             {
                 _board[x, y] = enemyManager.CreateEnemy(x, y);
@@ -156,15 +232,6 @@ public class GameManager : MonoBehaviour
         return _auxiliaryBombColor;
     }
 
-    public Color GetTileColor1()
-    {
-        return _tileColor1;
-    }
-
-    public Color GetTileColor2()
-    {
-        return _tileColor2;
-    }
 
     public int GetWidth()
     {
@@ -185,6 +252,13 @@ public class GameManager : MonoBehaviour
     {
         return _initialAuxiliaryBomb;
     }
+
+    public string GetBoardSpritePath()
+    {
+        return _boardSpritePath;
+    }
+
+
 
     // find enemy nearby (x,y) and push them (call Enemy.Knockback)
     private void Knockback(int x, int y)
@@ -342,15 +416,17 @@ public class GameManager : MonoBehaviour
         _auxiliaryBombs.Add(new Vector2Int(x, y));
     }
     
-    // global coordinate -> board coordinate
+    // global coordinate -> board coordinate (with cell size scaling)
     private int GlobalToGridX(float x)
     {
-        return Mathf.FloorToInt(x + _width / 2f);
+        float cellSize = boardManager.GetCellSize();
+        return Mathf.FloorToInt(x / cellSize + _width / 2f);
     }
     
     private int GlobalToGridY(float y)
-    {   
-        return Mathf.FloorToInt(y + _height / 2f);
+    {
+        float cellSize = boardManager.GetCellSize();
+        return Mathf.FloorToInt(y / cellSize + _height / 2f);
     }
 
     private static float Mod(float x, int m)
@@ -371,12 +447,19 @@ public class GameManager : MonoBehaviour
     // init setting from stage json file
     private void SetStageState(int stageId)
     {
-        string path = Path.Combine(Application.streamingAssetsPath, "Json", "Stage", "stage" + stageId + ".json");
-        string json = File.ReadAllText(path);
-        StageDifferentData differentData = JsonUtility.FromJson<StageDifferentData>(json);
+        // Load from Resources/Json folder (works in both editor and build)
+        TextAsset jsonFile = Resources.Load<TextAsset>("Json/Stage/stage" + stageId);
+        if (jsonFile == null)
+        {
+            Debug.LogError($"Failed to load stage{stageId}.json from Resources/Json/Stage/");
+            return;
+        }
+        
+        StageDifferentData differentData = JsonUtility.FromJson<StageDifferentData>(jsonFile.text);
         _width = differentData.width;
         _height = differentData.height;
         _enemyNumber = differentData.enemyNumber;
         _initialAuxiliaryBomb = differentData.initialAuxiliaryBomb;
+        _boardSpritePath = differentData.boardSpritePath;
     }
 }
