@@ -4,15 +4,14 @@ using Entity;
 public class StageManager : MonoBehaviour
 {
     // setting option (common in all stages)
-    public int knockbackDistance;
     public float walkDuration;
     public float knockbackDuration;
     public Color enemyColor;
-    public Color auxiliaryBombColor;
     
     // Prefabs and sprites (assign in Inspector - common for all stages)
     public GameObject enemyPrefab;
     public GameObject auxiliaryBombPrefab;
+    public GameObject realBombPrefab;
     public Sprite enemySprite;
     
     // StageRoot prefab
@@ -44,11 +43,11 @@ public class StageManager : MonoBehaviour
     {
         StageDestroy();
         currStage = Instantiate(stageRootPrefab);
-        StageCommonData commonData = new StageCommonData(walkDuration, knockbackDuration, knockbackDistance,
-            enemyColor, auxiliaryBombColor);
+        StageCommonData commonData = new StageCommonData(walkDuration, knockbackDuration,
+            enemyColor);
         
         StageRoot stageRoot = currStage.GetComponent<StageRoot>();
-        stageRoot.Install(stageId, commonData, enemyPrefab, auxiliaryBombPrefab, enemySprite);
+        stageRoot.Install(stageId, commonData, enemyPrefab, auxiliaryBombPrefab, realBombPrefab, enemySprite);
         
         // Subscribe to game state changed event
         _currentGameManager = stageRoot.GameManager;

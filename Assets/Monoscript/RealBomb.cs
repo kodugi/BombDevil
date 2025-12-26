@@ -1,19 +1,17 @@
 using UnityEngine;
 using Entity;
 
-public class AuxiliaryBomb : MonoBehaviour
+public class RealBomb : MonoBehaviour
 {
     // Bomb properties (set via Initialize)
     private BombType _bombType;
     private int _range;
-    private int _knockbackDistance;
     
     // Initialize bomb with data from JSON
     public void Initialize(BombData bombData)
     {
         _bombType = bombData.GetBombType();
         _range = bombData.range;
-        _knockbackDistance = bombData.knockbackDistance;
         
         // Apply color from bomb data
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
@@ -35,14 +33,8 @@ public class AuxiliaryBomb : MonoBehaviour
         return _range;
     }
     
-    // Get knockback distance
-    public int GetKnockbackDistance()
-    {
-        return _knockbackDistance;
-    }
-    
-    // Explode API
-    // plan to add exploding motion (when the art is complete)
+    // Explode API - destroy the bomb object
+    // Actual enemy killing is handled by GameManager
     public void Explode()
     {
         Destroy(gameObject);

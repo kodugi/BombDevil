@@ -61,7 +61,11 @@ public class EnemyManager : MonoBehaviour
         enemyObj.transform.localScale = Vector3.one * scale;
         
         // Initialize enemy
-        enemyObj.GetComponent<Enemy>().Initialize(_gameManager, _boardManager, _enemySprite);
+        Enemy enemyComponent = enemyObj.GetComponent<Enemy>();
+        enemyComponent.Initialize(_gameManager, _boardManager, _enemySprite);
+        
+        // Set random direction for this enemy (Up, Down, Left, Right)
+        enemyComponent.SetRandomDirection();
         
         return enemyObj;
     }
