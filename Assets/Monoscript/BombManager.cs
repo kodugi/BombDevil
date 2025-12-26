@@ -297,9 +297,17 @@ public class BombManager : MonoBehaviour
         AuxiliaryBomb bombComponent = bomb.GetComponent<AuxiliaryBomb>();
         bombComponent.Initialize(bombData);
         
-        // Apply scale based on cell size
-        float cellSize = _boardManager.GetCellSize();
-        bomb.transform.localScale = Vector3.one * cellSize;
+        // Apply scale based on cell size and sprite bounds
+        SpriteRenderer sr = bomb.GetComponent<SpriteRenderer>();
+        if (sr != null && sr.sprite != null)
+        {
+            float cellSize = _boardManager.GetCellSize();
+            Vector2 spriteSize = sr.sprite.bounds.size;
+            float scaleX = cellSize / spriteSize.x;
+            float scaleY = cellSize / spriteSize.y;
+            float scale = Mathf.Min(scaleX, scaleY);  // Keep aspect ratio, fit within cell
+            bomb.transform.localScale = Vector3.one * scale;
+        }
 
         // Decrease leftover count for this bomb type
         _leftoverBombs[bombType]--;
@@ -380,9 +388,17 @@ public class BombManager : MonoBehaviour
             bombComponent.Initialize(bombData);
         }
         
-        // Apply scale based on cell size
-        float cellSize = _boardManager.GetCellSize();
-        bomb.transform.localScale = Vector3.one * cellSize;
+        // Apply scale based on cell size and sprite bounds
+        SpriteRenderer sr = bomb.GetComponent<SpriteRenderer>();
+        if (sr != null && sr.sprite != null)
+        {
+            float cellSize = _boardManager.GetCellSize();
+            Vector2 spriteSize = sr.sprite.bounds.size;
+            float scaleX = cellSize / spriteSize.x;
+            float scaleY = cellSize / spriteSize.y;
+            float scale = Mathf.Min(scaleX, scaleY);  // Keep aspect ratio, fit within cell
+            bomb.transform.localScale = Vector3.one * scale;
+        }
         
         // Decrease RealBomb count
         _realBombCount--;
