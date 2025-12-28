@@ -24,12 +24,14 @@ public class StageRoot : MonoBehaviour
     private TMP_Text blueBombText;
     private TMP_Text greenBombText;
     private TMP_Text pinkBombText;
+    private TMP_Text skyblueBombText;
     private TMP_Text realBombText;
     
     // Check UI objects (found by name)
     private GameObject blueBombChecked;
     private GameObject greenBombChecked;
     private GameObject pinkBombChecked;
+    private GameObject skyblueBombChecked;
     private GameObject realBombChecked;
     
     // Explode button and text
@@ -62,12 +64,14 @@ public class StageRoot : MonoBehaviour
         blueBombText = GameObject.Find("LeftoverBlueBomb")?.GetComponent<TMP_Text>();
         greenBombText = GameObject.Find("LeftoverGreenBomb")?.GetComponent<TMP_Text>();
         pinkBombText = GameObject.Find("LeftoverPinkBomb")?.GetComponent<TMP_Text>();
+        skyblueBombText = GameObject.Find("LeftoverSkyblueBomb")?.GetComponent<TMP_Text>();
         realBombText = GameObject.Find("LeftoverRealBomb")?.GetComponent<TMP_Text>();
         
         // Find check UI objects by name (must be active in scene to be found)
         blueBombChecked = GameObject.Find("BlueBombChecked");
         greenBombChecked = GameObject.Find("GreenBombChecked");
         pinkBombChecked = GameObject.Find("PinkBombChecked");
+        skyblueBombChecked = GameObject.Find("SkyblueBombChecked");
         realBombChecked = GameObject.Find("RealBombChecked");
         
         // Deactivate all check UIs at game start
@@ -110,8 +114,8 @@ public class StageRoot : MonoBehaviour
         enemyManager.Initialize(enemyPrefab, enemySet, gameManager, boardManager, enemySprite);
         bombManager.Initialize(auxiliaryBombPrefab, realBombPrefab, gameManager, 
             auxiliaryBombSet, realBombSet,
-            blueBombText, greenBombText, pinkBombText, realBombText,
-            blueBombChecked, greenBombChecked, pinkBombChecked, realBombChecked,
+            blueBombText, greenBombText, pinkBombText, skyblueBombText, realBombText,
+            blueBombChecked, greenBombChecked, pinkBombChecked, skyblueBombChecked, realBombChecked,
             explodeButtonText, boardManager);
         
         // Connect explode button click event
