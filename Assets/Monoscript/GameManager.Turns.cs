@@ -22,6 +22,14 @@ public partial class GameManager : MonoBehaviour
         }
         SetInfoMessage("Exploding...");
         yield return StartCoroutine(ExplodeAllBombsCoroutine());
+        SetInfoMessage("Enemy's turn");
+        yield return new WaitForSeconds(1f);
+        yield return StartCoroutine(MoveAllEnemiesCoroutine());
+        _remainingTurns--;
+        if (_turnText != null)
+            _turnText.text = $"Turns: {_remainingTurns}";
+
+        // Only check lose condition after all bombs and enemy moves are resolved
         if (_realBombUsedThisTurn && GetEnemyCount() > 0)
         {
             yield return new WaitForSeconds(1f);
@@ -35,12 +43,6 @@ public partial class GameManager : MonoBehaviour
 #endif
             yield break;
         }
-        SetInfoMessage("Enemy's turn");
-        yield return new WaitForSeconds(1f);
-        yield return StartCoroutine(MoveAllEnemiesCoroutine());
-        _remainingTurns--;
-        if (_turnText != null)
-            _turnText.text = $"Turns: {_remainingTurns}";
         if (_remainingTurns <= 0 && GetEnemyCount() > 0)
         {
             yield return new WaitForSeconds(1f);
@@ -101,16 +103,44 @@ public partial class GameManager : MonoBehaviour
                     case BombType.BlueBomb:
                     case BombType.GreenBomb:
                         Debug.Log($"Knockback bomb at ({x}, {y}) with range {range} and knockback distance {knockbackDistance}");
-                        Knockback(x, y, range, knockbackDistance);
+                        NormalBomb(x, y, range, knockbackDistance);
                         break;
                     case BombType.PinkBomb:
-                        break;
                     case BombType.SkyblueBomb:
+                        SkyblueBomb(x, y, range);
                         break;
                     default:
                         break;
                 }
                 yield return new WaitForSeconds(_knockbackDuration);
+            }
+        }
+        // After all moves, check for multiple enemies in the same cell and stun them
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                var enemyObjs = new System.Collections.Generic.List<Enemy>();
+                foreach (var obj in _board[x, y])
+                {
+                    if (obj != null)
+                    {
+                        Enemy enemy = obj.GetComponent<Enemy>();
+                        if (enemy != null)
+                        {
+                            enemyObjs.Add(enemy);
+                            Debug.Log($"Enemy at ({x}, {y}) with id {enemy.EnemyId} found for collision check");
+                        }
+                    }
+                }
+                if (enemyObjs.Count >= 2)
+                {
+                    Debug.Log($"Stunning {enemyObjs.Count} enemies at ({x}, {y}) due to collision");
+                    foreach (var enemy in enemyObjs)
+                    {
+                        enemy.SetStunned(true);
+                    }
+                }
             }
         }
     }
@@ -135,11 +165,15 @@ public partial class GameManager : MonoBehaviour
                 }
             }
         }
+        // Move all enemies (skip stunned ones, handled in Enemy.cs)
         foreach (var (x, y, obj, enemy) in enemies)
         {
-            Vector2 dirAndDist = enemy.GetMoveDirection();
-            enemy.MoveInDirection();
-            ReflectMoveInBoard(x, y, obj, dirAndDist);
+            // Only move if not stunned (redundant, but explicit for clarity)
+            if (!enemy.IsStunned)
+            {
+                Vector2Int dirAndDist = enemy.GetMoveDirection();
+                HandleMoveInBoard(x, y, obj, dirAndDist);
+            }
         }
         if (enemies.Count > 0)
         {

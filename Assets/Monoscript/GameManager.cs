@@ -9,6 +9,7 @@ public partial class GameManager : MonoBehaviour
     // Manager references (set via Initialize)
     private EnemyManager enemyManager;
     private BombManager bombManager;
+    private ItemManager itemManager;
     private BoardManager boardManager;
     // setting option from StageManager (common set)
     private float _walkDuration;
@@ -32,6 +33,17 @@ public partial class GameManager : MonoBehaviour
     private List<Vector2Int> _realBombs;
     // combined bomb order (tracks both auxiliary and real bombs in placement order)
     private List<(Vector2Int coord, bool isRealBomb)> _allBombs;
+    // tracking wall order
+    private List<Vector2Int> _walls;
+
+    // --- Item system variables ---
+    // tracking placed item order
+    private List<Vector2Int> _placedItems;
+    // combined item order (tracks all items in placement order)
+    private List<(Vector2Int coord, ItemType itemType)> _allItems;
+    private List<Vector2Int> _teleporters;
+    // default item sprite for preview
+    private Sprite _defaultItemSprite;
     // RealBomb kill tracking
     private int _realBombKillCount = 0;
     private int _totalEnemyCount = 0;
@@ -58,12 +70,13 @@ public partial class GameManager : MonoBehaviour
     private TMP_Text _turnText;
     private float _elapsedTime = 0f;
 
-    public void Initialize(EnemyManager enemyManager, BombManager bombManager, int stageId, StageCommonData commonData)
+    public void Initialize(EnemyManager enemyManager, BombManager bombManager, ItemManager itemManager, int stageId, StageCommonData commonData)
     {
         SetStageState(stageId);
         SetCommonData(commonData);
         this.enemyManager = enemyManager;
         this.bombManager = bombManager;
+        this.itemManager = itemManager;
         _board = new List<GameObject>[_width, _height];
         for (int x = 0; x < _width; x++)
         {
@@ -75,10 +88,20 @@ public partial class GameManager : MonoBehaviour
         _auxiliaryBombs = new List<Vector2Int>();
         _realBombs = new List<Vector2Int>();
         _allBombs = new List<(Vector2Int, bool)>();
+        _walls = new List<Vector2Int>();
+        // --- Item system initialization ---
+        _placedItems = new List<Vector2Int>();
+        _allItems = new List<(Vector2Int, ItemType)>();
+        _teleporters = new List<Vector2Int>();
         _realBombKillCount = 0;
         _totalEnemyCount = _enemyNumber;
         _elapsedTime = 0f;
         _currentState = GameState.Playing;
+    }
+    // Set default item sprite for item preview
+    public void SetDefaultItemSprite(Sprite sprite)
+    {
+        _defaultItemSprite = sprite;
     }
 
     public void SetBoardManager(BoardManager boardManager)
@@ -138,7 +161,24 @@ public partial class GameManager : MonoBehaviour
             return;
         _elapsedTime += Time.deltaTime;
         UpdateTimeText();
-        UpdateBombPreview();
+
+        // Show item preview if item is selected, otherwise bomb preview, otherwise hide both
+        if (itemManager != null && itemManager.HasItemSelected())
+        {
+            UpdateItemPreview();
+            HidePreview(); // Hide bomb preview if item is selected
+        }
+        else if (bombManager != null && bombManager.HasBombSelected())
+        {
+            UpdateBombPreview();
+            HideItemPreview(); // Hide item preview if bomb is selected
+        }
+        else
+        {
+            HideItemPreview();
+            HidePreview();
+        }
+
         if (Input.GetMouseButtonDown(0))
             MouseClickProcess();
         CheckGameState();

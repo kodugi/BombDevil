@@ -24,7 +24,7 @@ public class BombManager : MonoBehaviour
     private GameObject _pinkBombChecked;
     private GameObject _skyblueBombChecked;
     private GameObject _realBombChecked;
-    
+
     // Explode button text
     private TMP_Text _explodeButtonText;
 
@@ -69,7 +69,7 @@ public class BombManager : MonoBehaviour
         _explodeButtonText = explodeButtonText;
         _boardManager = boardManager;
         _gameManager = gameManager;
-        
+
         // Set initial explode button text
         if (_explodeButtonText != null)
             _explodeButtonText.text = "PASS";
@@ -199,6 +199,12 @@ public class BombManager : MonoBehaviour
             string bombName = GetBombDisplayName(bombType);
             _gameManager.ShowBombSelectedMessage(bombName);
         }
+    }
+
+    public void ClearCurrentBombType()
+    {
+        _currentBombType = null;
+        UpdateCheckedUI();
     }
     
     // Get display name for bomb type

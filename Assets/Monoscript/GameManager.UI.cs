@@ -35,6 +35,16 @@ public partial class GameManager : MonoBehaviour
         ShowTempMessage($"There's no {bombName} bomb left!", 1f, "Player's turn");
     }
 
+    public void ShowItemSelectedMessage(string itemName)
+    {
+        ShowTempMessage($"{itemName} is selected!", 1f, "Player's turn");
+    }
+
+    public void ShowNoItemLeftMessage(string itemName)
+    {
+        ShowTempMessage($"There's no {itemName} left!", 1f, "Player's turn");
+    }
+
     private void UpdateStageStatsUI()
     {
         if (_stageText != null)

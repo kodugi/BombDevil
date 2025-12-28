@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 public partial class GameManager : MonoBehaviour
 {
+    // Wall representation: true if wall exists at (x, y)
+    // Initialize and manage this array elsewhere as needed
+
+    // Checks if the enemy at (x, y) is on a teleporter and teleports it to the other teleporter
     public void CreateEnemy()
     {
         DeleteEnemy();
@@ -55,19 +59,22 @@ public partial class GameManager : MonoBehaviour
 
     private List<(int targetX, int targetY, GameObject obj)> FindEnemiesInRange(int x, int y, int range)
     {
-        int[,] dirOffsets = { {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1} };
         List<(int targetX, int targetY, GameObject obj)> target = new List<(int, int, GameObject)>();
         for (int r = 1; r <= range; r++)
         {
-            for (int d = 0; d < 8; d++)
+            for(int dx = -r; dx <= r; dx++)
             {
-                int targetX = Mod(x + dirOffsets[d, 0] * r, _width);
-                int targetY = Mod(y + dirOffsets[d, 1] * r, _height);
-                foreach (var obj in _board[targetX, targetY])
+                for(int dy = -r; dy <= r; dy++)
                 {
-                    if (obj != null && obj.GetComponent<Enemy>() != null)
+                    int targetX = Mod(x + dx, _width);
+                    int targetY = Mod(y + dy, _height);
+                    foreach (var obj in _board[targetX, targetY])
                     {
-                        target.Add((targetX, targetY, obj));
+                        if (obj != null && obj.GetComponent<Enemy>() != null)
+                        {
+                            target.Add((targetX, targetY, obj));
+                            Debug.Log($"Found enemy at ({targetX}, {targetY}) in range {r} of ({x}, {y})");
+                        }
                     }
                 }
             }
@@ -76,14 +83,29 @@ public partial class GameManager : MonoBehaviour
     }
 
     // Returns the vector from (fromX, fromY) to (toX, toY) in board units (not normalized)
-    private Vector2 GetDirectionAndDistance(int fromX, int fromY, int toX, int toY)
+    private Vector2Int GetDirectionAndDistance(int fromX, int fromY, int toX, int toY)
     {
         int dx = toX - fromX;
         int dy = toY - fromY;
-        return new Vector2(dx, dy);
+        // Handle wrapping
+        if(Mathf.Abs(dx) > _width / 2)
+        {
+            if(dx > 0)
+                dx -= _width;
+            else
+                dx += _width;
+        }
+        if(Mathf.Abs(dy) > _height / 2)
+        {
+            if(dy > 0)
+                dy -= _height;
+            else
+                dy += _height;
+        }
+        return new Vector2Int(dx, dy);
     }
 
-    private void Knockback(int x, int y, int range, int distance)
+    private void NormalBomb(int x, int y, int range, int distance)
     {
         List<(int targetX, int targetY, GameObject obj)> target = FindEnemiesInRange(x, y, range);
         foreach (var (targetX, targetY, obj) in target)
@@ -91,14 +113,14 @@ public partial class GameManager : MonoBehaviour
             Enemy enemy = obj.GetComponent<Enemy>();
             if (enemy != null)
             {
-                Vector2 dirAndDist = GetDirectionAndDistance(x, y, targetX, targetY) * distance;
-                enemy.Knockback(dirAndDist);
-                ReflectMoveInBoard(targetX, targetY, obj, dirAndDist); // 1 step in that direction for board update
+                // Bombs can knock back stunned enemies
+                Vector2Int dirAndDist = GetDirectionAndDistance(x, y, targetX, targetY) * distance;
+                HandleMoveInBoard(targetX, targetY, obj, dirAndDist); // 1 step in that direction for board update
             }
         }
     }
 
-    private void PinkBomb(int x, int y, int range)
+    /*private void PinkBomb(int x, int y, int range)
     {
         List<(int targetX, int targetY, GameObject obj)> target = FindEnemiesInRange(x, y, range);
         foreach (var (targetX, targetY, obj) in target)
@@ -106,9 +128,44 @@ public partial class GameManager : MonoBehaviour
             Enemy enemy = obj.GetComponent<Enemy>();
             if (enemy != null)
             {
-                Vector2 dirAndDist = GetDirectionAndDistance(x, y, targetX, targetY);
-                enemy.Walk(dirAndDist);
+                Vector2Int dirAndDist = GetDirectionAndDistance(x, y, targetX, targetY);
+                Debug.Log($"PinkBomb knocking back enemy at ({targetX}, {targetY}) by {dirAndDist}");
+                enemy.Knockback(dirAndDist);
                 ReflectMoveInBoard(targetX, targetY, obj, dirAndDist); // 1 step in that direction for board update
+            }
+        }
+    }*/
+
+    private void SkyblueBomb(int x, int y, int range)
+    {
+        List<(int targetX, int targetY, GameObject obj)> target = FindEnemiesInRange(x, y, range);
+        foreach (var (targetX, targetY, obj) in target)
+        {
+            Enemy enemy = obj.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                Vector2Int dirAndDist = GetDirectionAndDistance(x, y, targetX, targetY);
+                Vector2Int knockbackDir;
+                if(dirAndDist.x == 0 || dirAndDist.y == 0)
+                {
+                    return; // If straight line, do not knockback
+                }
+                else
+                {
+                    if(Mathf.Abs(dirAndDist.x) < Mathf.Abs(dirAndDist.y))
+                    {
+                        knockbackDir = new Vector2Int(dirAndDist.x > 0 ? 1 : -1, 0);
+                    }
+                    else if(Mathf.Abs(dirAndDist.x) > Mathf.Abs(dirAndDist.y))
+                    {
+                        knockbackDir = new Vector2Int(0, dirAndDist.y > 0 ? 1 : -1);
+                    }
+                    else
+                    {
+                        knockbackDir = new Vector2Int(dirAndDist.x > 0 ? 1 : -1, dirAndDist.y > 0 ? 1 : -1);
+                    }
+                    HandleMoveInBoard(targetX, targetY, obj, knockbackDir); // 1 step in that direction for board update
+                }
             }
         }
     }
@@ -126,12 +183,83 @@ public partial class GameManager : MonoBehaviour
     }
 
     // directionAndDistance: the vector from (x, y) to the new cell (in board units)
-    private void ReflectMoveInBoard(int x, int y, GameObject obj, Vector2 directionAndDistance)
+    private void HandleMoveInBoard(int x, int y, GameObject obj, Vector2Int directionAndDistance)
     {
         if (obj == null)
             return;
-        Vector3 target = GetWrappedTarget(directionAndDistance, new Vector3(x, y, 0), 0, _width, 0, _height);
-        _board[x, y].Remove(obj);
-        _board[(int)target.x, (int)target.y].Add(obj);
+        Enemy enemy = obj.GetComponent<Enemy>();
+        if (enemy == null)
+            return;
+
+        // Remove enemy from all cells to ensure uniqueness
+        for (int i = 0; i < _width; i++)
+        {
+            for (int j = 0; j < _height; j++)
+            {
+                if (_board[i, j].Contains(obj))
+                {
+                    _board[i, j].Remove(obj);
+                }
+            }
+        }
+
+        Vector2Int? teleportedPos = HandleTeleporter(x, y, obj, directionAndDistance);
+        if (teleportedPos.HasValue)
+        {
+            Debug.Log($"Enemy at ({x}, {y}) teleported to ({teleportedPos.Value.x}, {teleportedPos.Value.y})");
+            // Calculate how much movement remains after teleportation
+            Vector2Int teleOffset = new Vector2Int(teleportedPos.Value.x - x, teleportedPos.Value.y - y);
+            Vector2Int remainingMove = directionAndDistance - teleOffset;
+            enemy.Knockback(teleOffset); // Move to teleporter
+            enemy.Knockback(remainingMove); // Move remaining distance after teleport
+            _board[Mod(teleportedPos.Value.x + remainingMove.x, _width), Mod(teleportedPos.Value.y + remainingMove.y, _height)].Add(obj);
+            return;
+        }
+        else {
+            Debug.Log($"Enemy at ({x}, {y}) moving by {directionAndDistance}");
+            enemy.Knockback(directionAndDistance);
+            _board[Mod(x + directionAndDistance.x, _width), Mod(y + directionAndDistance.y, _height)].Add(obj);
+        }
     }
+
+    // Checks if a teleporter exists at the given position
+    private bool IsTeleporterAt(Vector2Int pos)
+    {
+        // Example: Assume teleporters are stored in a List<Vector2Int> _teleporters
+        // You may need to adjust this logic to match your actual teleporter storage
+        if (_teleporters == null) return false;
+        return _teleporters.Contains(pos);
+    }
+
+    // Finds the other teleporter position, given one teleporter's position
+    private Vector2Int? FindOtherTeleporter(Vector2Int currentTeleporter)
+    {
+        // Example: Assume only two teleporters exist
+        if (_teleporters == null || _teleporters.Count != 2) return null;
+        if (_teleporters[0] == currentTeleporter)
+            return _teleporters[1];
+        if (_teleporters[1] == currentTeleporter)
+            return _teleporters[0];
+        return null;
+    }
+
+    private Vector2Int? HandleTeleporter (int x, int y, GameObject obj, Vector2Int directionAndDistance)
+    {
+        int steps = Mathf.Max(Mathf.Abs(directionAndDistance.x), Mathf.Abs(directionAndDistance.y));
+        for (int step = 1; step <= steps; step++)
+        {
+            int currentX = Mod(x + directionAndDistance.x * step / steps, _width);
+            int currentY = Mod(y + directionAndDistance.y * step / steps, _height);
+            if (IsTeleporterAt(new Vector2Int(currentX, currentY)))
+            {
+                Vector2Int? otherTele = FindOtherTeleporter(new Vector2Int(currentX, currentY));
+                if (otherTele.HasValue)
+                {
+                    return new Vector2Int(otherTele.Value.x, otherTele.Value.y);
+                }
+            }
+        }
+        return null;
+    }
+    
 }

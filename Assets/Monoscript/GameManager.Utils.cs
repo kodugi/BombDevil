@@ -27,6 +27,21 @@ public partial class GameManager : MonoBehaviour
                 return 0;
         }
     }
+
+    public int GetInitialItemCount(ItemType itemType)
+    {
+        //TODO: Remove hardcoding later
+        Debug.Log($"Getting initial count for item type: {itemType}");
+        switch (itemType)
+        {
+            case ItemType.Megaphone:
+                return 2;
+            case ItemType.Teleporter:
+                return 2;
+            default:
+                return 0;
+        }
+    }
     public string GetBoardSpritePath() => _boardSpritePath;
     public GameState GetCurrentState() => _currentState;
 
@@ -60,16 +75,10 @@ public partial class GameManager : MonoBehaviour
 
     private void CheckGameState()
     {
+        // Only check for win here. Lose condition is handled after all bombs have exploded in the turn sequence.
         if (GetEnemyCount() == 0 && _realBombKillCount == _totalEnemyCount)
         {
             SetGameState(GameState.Win);
-            return;
-        }
-        bool noAuxiliaryBombs = bombManager.GetTotalLeftoverBombs() <= 0 && bombManager.GetPlantedAuxiliaryBombCount() <= 0;
-        bool noRealBombs = !bombManager.IsRealBombAvailable() && bombManager.GetPlantedRealBombCount() <= 0;
-        if (noAuxiliaryBombs && noRealBombs && GetEnemyCount() > 0)
-        {
-            SetGameState(GameState.Lose);
             return;
         }
     }

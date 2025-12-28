@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Entity;
+using System.Collections.Generic;
 
 public class StageRoot : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class StageRoot : MonoBehaviour
     private EnemyManager enemyManager;
     private BombManager bombManager;
     private BoardManager boardManager;
+    private ItemManager itemManager;
     
     // Prefabs and sprites (received from StageManager)
     private GameObject enemyPrefab;
@@ -33,6 +35,10 @@ public class StageRoot : MonoBehaviour
     private GameObject pinkBombChecked;
     private GameObject skyblueBombChecked;
     private GameObject realBombChecked;
+
+    // Teleporter and Megaphone buttons and texts
+    private Button teleporterButton;
+    private Button megaphoneButton;
     
     // Explode button and text
     private Button explodeButton;
@@ -56,6 +62,18 @@ public class StageRoot : MonoBehaviour
         enemyManager = GetComponentInChildren<EnemyManager>();
         bombManager = GetComponentInChildren<BombManager>();
         boardManager = GetComponentInChildren<BoardManager>();
+        itemManager = GetComponentInChildren<ItemManager>();
+        // Find item prefabs and UI (example: assumes ItemPrefabLibrary is attached to StageRoot or child)
+        ItemPrefabLibrary itemPrefabLibrary = GetComponentInChildren<ItemPrefabLibrary>();
+        Dictionary<ItemType, GameObject> itemPrefabs = itemPrefabLibrary != null ? itemPrefabLibrary.GetPrefabDictionary() : new Dictionary<ItemType, GameObject>();
+        Transform itemSet = GameObject.Find("ItemSet")?.transform;
+        TMP_Text itemText = GameObject.Find("LeftoverItemText")?.GetComponent<TMP_Text>();
+
+        // Initialize itemManager
+        if (itemManager != null)
+        {
+            itemManager.Initialize(itemPrefabs, gameManager, boardManager, itemSet, itemText);
+        }
         
         // Find scene objects by name
         enemySet = GameObject.Find("EnemySet")?.transform;
@@ -73,6 +91,9 @@ public class StageRoot : MonoBehaviour
         pinkBombChecked = GameObject.Find("PinkBombChecked");
         skyblueBombChecked = GameObject.Find("SkyblueBombChecked");
         realBombChecked = GameObject.Find("RealBombChecked");
+
+        teleporterButton = GameObject.Find("TeleporterButton")?.GetComponent<Button>();
+        megaphoneButton = GameObject.Find("MegaphoneButton")?.GetComponent<Button>();
         
         // Deactivate all check UIs at game start
         if (blueBombChecked != null) blueBombChecked.SetActive(false);
@@ -89,7 +110,7 @@ public class StageRoot : MonoBehaviour
         explodeButtonText = GameObject.Find("ExplodeButtonText")?.GetComponent<TMP_Text>();
         
         // Initialize GameManager first (loads stage data including board sprite path)
-        gameManager.Initialize(enemyManager, bombManager, stageId, commonData);
+        gameManager.Initialize(enemyManager, bombManager, itemManager, stageId, commonData);
         
         // Load board sprite from Resources using path from JSON
         Sprite boardSprite = LoadSprite(gameManager.GetBoardSpritePath(), "board");
@@ -117,12 +138,33 @@ public class StageRoot : MonoBehaviour
             blueBombText, greenBombText, pinkBombText, skyblueBombText, realBombText,
             blueBombChecked, greenBombChecked, pinkBombChecked, skyblueBombChecked, realBombChecked,
             explodeButtonText, boardManager);
+
+        // Initialize itemManager (done earlier after finding item prefabs and UI)
+        itemManager.Initialize(itemPrefabLibrary.GetPrefabDictionary(), gameManager, boardManager, 
+            GameObject.Find("ItemSet")?.transform,
+            GameObject.Find("LeftoverItemText")?.GetComponent<TMP_Text>());
         
         // Connect explode button click event
         if (explodeButton != null)
         {
             explodeButton.onClick.RemoveAllListeners();
             explodeButton.onClick.AddListener(gameManager.OnExplodeButtonClick);
+        }
+
+        if (teleporterButton != null)
+        {
+            teleporterButton.onClick.RemoveAllListeners();
+            teleporterButton.onClick.AddListener(() => 
+                gameManager.OnItemButtonClicked(ItemType.Teleporter));
+            Debug.Log("Teleporter button listener added.");
+        }
+
+        if (megaphoneButton != null)
+        {
+            megaphoneButton.onClick.RemoveAllListeners();
+            megaphoneButton.onClick.AddListener(() => 
+                gameManager.OnItemButtonClicked(ItemType.Megaphone));
+            Debug.Log("Megaphone button listener added.");
         }
         
         // Create enemies for this stage
