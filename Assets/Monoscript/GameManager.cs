@@ -181,6 +181,25 @@ public partial class GameManager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
             MouseClickProcess();
+        
+        // --- Bomb Selection Input ---
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            if (bombManager != null) bombManager.SetCurrentBombType(BombType.BlueBomb);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            if (bombManager != null) bombManager.SetCurrentBombType(BombType.GreenBomb);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            if (bombManager != null) bombManager.SetCurrentBombType(BombType.SkyblueBomb);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            if (bombManager != null) bombManager.SetCurrentBombType(BombType.RealBomb);
+        }
+        
         CheckGameState();
     }
 }
