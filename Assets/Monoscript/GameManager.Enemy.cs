@@ -203,19 +203,35 @@ public partial class GameManager : MonoBehaviour
             }
         }
 
-        Vector2Int? teleportedPos = HandleTeleporter(x, y, obj, directionAndDistance);
-        if (teleportedPos.HasValue)
+        Vector2Int? entryTeleporterPos;
+        Vector2Int? exitTeleporterPos = HandleTeleporter(x, y, obj, directionAndDistance, out entryTeleporterPos);
+
+        if (exitTeleporterPos.HasValue && entryTeleporterPos.HasValue)
         {
-            Debug.Log($"Enemy at ({x}, {y}) teleported to ({teleportedPos.Value.x}, {teleportedPos.Value.y})");
-            // Calculate how much movement remains after teleportation
-            Vector2Int teleOffset = new Vector2Int(teleportedPos.Value.x - x, teleportedPos.Value.y - y);
-            Vector2Int remainingMove = directionAndDistance - teleOffset;
-            enemy.Knockback(teleOffset); // Move to teleporter
-            enemy.Knockback(remainingMove); // Move remaining distance after teleport
-            _board[Mod(teleportedPos.Value.x + remainingMove.x, _width), Mod(teleportedPos.Value.y + remainingMove.y, _height)].Add(obj);
+            // The enemy's path is interrupted by a teleporter.
+            // 1. Calculate the movement vector to reach the teleporter entry.
+            Vector2Int moveToEntry = GetDirectionAndDistance(x, y, entryTeleporterPos.Value.x, entryTeleporterPos.Value.y);
+            
+            // 2. Determine the remaining movement after reaching the teleporter.
+            Vector2Int remainingMove = directionAndDistance - moveToEntry;
+
+            // 3. Calculate the final grid position after exiting the second teleporter and completing the remaining move.
+            Vector2Int finalPos = new Vector2Int(
+                Mod(exitTeleporterPos.Value.x + remainingMove.x, _width),
+                Mod(exitTeleporterPos.Value.y + remainingMove.y, _height)
+            );
+
+            // 4. Calculate the total displacement vector from the start to the final position, accounting for board wrap.
+            Vector2Int totalMove = GetDirectionAndDistance(x, y, finalPos.x, finalPos.y);
+
+            // 5. Apply a single knockback for the entire calculated path.
+            enemy.Knockback(totalMove);
+            _board[finalPos.x, finalPos.y].Add(obj);
+            Debug.Log($"Enemy at ({x}, {y}) path via teleporter. Final position: {finalPos}. Total move vector: {totalMove}");
             return;
         }
         else {
+            // No teleporter in path, perform a standard move.
             Debug.Log($"Enemy at ({x}, {y}) moving by {directionAndDistance}");
             enemy.Knockback(directionAndDistance);
             _board[Mod(x + directionAndDistance.x, _width), Mod(y + directionAndDistance.y, _height)].Add(obj);
@@ -243,8 +259,9 @@ public partial class GameManager : MonoBehaviour
         return null;
     }
 
-    private Vector2Int? HandleTeleporter (int x, int y, GameObject obj, Vector2Int directionAndDistance)
+    private Vector2Int? HandleTeleporter (int x, int y, GameObject obj, Vector2Int directionAndDistance, out Vector2Int? entryPoint)
     {
+        entryPoint = null;
         int steps = Mathf.Max(Mathf.Abs(directionAndDistance.x), Mathf.Abs(directionAndDistance.y));
         for (int step = 1; step <= steps; step++)
         {
@@ -252,6 +269,7 @@ public partial class GameManager : MonoBehaviour
             int currentY = Mod(y + directionAndDistance.y * step / steps, _height);
             if (IsTeleporterAt(new Vector2Int(currentX, currentY)))
             {
+                entryPoint = new Vector2Int(currentX, currentY);
                 Vector2Int? otherTele = FindOtherTeleporter(new Vector2Int(currentX, currentY));
                 if (otherTele.HasValue)
                 {
