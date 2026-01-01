@@ -215,10 +215,6 @@ public class BombManager : MonoBehaviour
                 if (_skyblueBombText != null)
                     _skyblueBombText.text = $"Sky: {count}";
                 break;
-            case BombType.SkyblueBomb:
-                if (_skyblueBombText != null)
-                    _skyblueBombText.text = $"Skyblue: {count}";
-                break;
         }
     }
     
@@ -369,9 +365,6 @@ public class BombManager : MonoBehaviour
                     break;
                 case BombType.SixthBomb:
                     if (_6thBombChecked != null) _6thBombChecked.SetActive(true);
-                    break;
-                case BombType.SkyblueBomb:
-                    if (_skyblueBombChecked != null) _skyblueBombChecked.SetActive(true);
                     break;
                 case BombType.SkyblueBomb:
                     if (_skyblueBombChecked != null) _skyblueBombChecked.SetActive(true);
